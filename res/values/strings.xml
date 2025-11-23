@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MinimalNative</string>
+    <string name="lib_name">main</string>
 </resources>

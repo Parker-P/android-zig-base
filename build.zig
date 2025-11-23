@@ -9,12 +9,13 @@ pub fn build(b: *std.Build) void {
     // 4. Download and extract the zip of the command line tools: https://developer.android.com/studio#command-line-tools-only to C:\Android\cmdline-tools
     // 5. Use the command line tools to install the tools needed for native android development
     //  a. sdkmanager --sdk_root=C:\Android\cmdline-tools\bin --licenses (accept the licenses, requires user input, find a way to make it auto)
-    //  b. sdkmanager --sdk_root=C:\Android\cmdline-tools\bin --list and parse the latest versions for "platform-tools", "build-tools" and "ndk"
-    //  c. sdkmanager --sdk_root=C:\Android\cmdline-tools\bin "platform-tools" "build-tools;<version parsed in step b>" "ndk;<version parsed in step b>"
+    //  b. sdkmanager --sdk_root=C:\Android\cmdline-tools\bin --list and parse the latest versions for "platform-tools", "build-tools", "ndk" and "platform"
+    //  c. sdkmanager --sdk_root=C:\Android\cmdline-tools\bin "platform-tools" "build-tools;<version parsed in step b>" "ndk;<version parsed in step b>" "platforms;android-32"
     //    quick info:
     //     1. platform-tools contains tools to debug and push packages to android devices
-    //     2. build-tools contains tools to package the application into a valid APK (android has a strict system in place to make sure it's not a harmful package, which includes stuff like packages signature checks)
+    //     2. build-tools and platforms contain tools to package the application into a valid APK (android has a strict system in place to make sure it's not a harmful package, which includes stuff like packages signature checks)
     //     3. ndk contains the C/C++ includes needed to actually develop your app, which you will include in your codebase
+    //     4. the latest platforms' versions' android.jar (used to link evertyhing together to make an apk) is bugged, please keep android-32 - tested and working
 
     // -------- CONFIG --------
     const ndk_path = "C:/Android/cmdline-tools/bin/ndk/25.2.9519653";
@@ -41,6 +42,13 @@ pub fn build(b: *std.Build) void {
 
     // Output result
     b.installArtifact(lib);
+
+    // Steps that actually worked:
+    // 1. aapt2 compile -o compiled_res.zip --dir res
+    // 2. aapt2 link -o unsigned.apk -I C:\Android\cmdline-tools\bin\platforms\android-32\android.jar --manifest AndroidManifest.xml compiled_res.zip
+    // 3. ren unsigned.apk unsigned.zip
+    // 4. 7z u -tzip -mx=0 unsigned.zip "lib\arm64-v8a\libmain.so"
+    // 5. ren unsigned.zip unsigned.apk
 
     // Steps remaining:
     // C:\Android\ndk\25.2.9519653\toolchains\llvm\prebuilt\windows-x86_64\bin\clang \
