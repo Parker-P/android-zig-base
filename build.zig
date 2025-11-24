@@ -6,6 +6,7 @@ pub fn build(b: *std.Build) void {
     // Add automation for the following:
     // 1. Install OpenJDK by running: winget install OpenJDK
     // 2. This installs it to "C:\Program Files\Microsoft\jdk-<latest jdk version>" and automatically sets the JAVA_HOME and Path system environment variables which the following steps need to work
+    // 3. Install msys64 and add the path to the binaries (C:\msys64\usr\bin) to the Path environment variable: winget install msys2.msys2
     // 4. Download and extract the zip of the command line tools: https://developer.android.com/studio#command-line-tools-only to C:\Android\cmdline-tools
     // 5. Use the command line tools to install the tools needed for native android development
     //  a. sdkmanager --sdk_root=C:\Android\cmdline-tools\bin --licenses (accept the licenses, requires user input, find a way to make it auto)
@@ -46,9 +47,16 @@ pub fn build(b: *std.Build) void {
     // Steps that actually worked:
     // 1. aapt2 compile -o compiled_res.zip --dir res
     // 2. aapt2 link -o unsigned.apk -I C:\Android\cmdline-tools\bin\platforms\android-32\android.jar --manifest AndroidManifest.xml compiled_res.zip
+    // 3. javac classes.java
+    // 7. java -cp "C:\Android\cmdline-tools\bin\build-tools\33.0.2\lib\d8.jar" com.android.tools.r8.D8 --output .\ *.class
     // 3. ren unsigned.apk unsigned.zip
     // 4. 7z u -tzip -mx=0 unsigned.zip "lib\arm64-v8a\libmain.so"
-    // 5. ren unsigned.zip unsigned.apk
+    // 8. 7z u -tzip -mx=0 unsigned.zip "classes.dex"
+    // 9. ren unsigned.zip unsigned.apk
+    // 10. if you don't have a key, use this command to make one:
+    //     keytool -genkeypair -keystore my-upload-key.jks -alias my-app-key -keyalg EC -curve prime256v1 -validity 20000
+    //     Write the key down somewhere physical because you will never be able to update you app on the play store if you don't remember it
+    // 11. C:\Android\cmdline-tools\bin\build-tools\33.0.2\zipalign -f -p -v 4 unsigned.apk aligned.apk
 
     // Steps remaining:
     // C:\Android\ndk\25.2.9519653\toolchains\llvm\prebuilt\windows-x86_64\bin\clang \
