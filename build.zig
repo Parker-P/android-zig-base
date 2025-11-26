@@ -4,6 +4,7 @@ pub fn build(b: *std.Build) void {
 
     // TODO:
     // Add automation for the following:
+    // 1. cd to the directory where this file is
     // 1. Install OpenJDK by running: winget install OpenJDK
     // 2. This installs it to "C:\Program Files\Microsoft\jdk-<latest jdk version>" and automatically sets the JAVA_HOME and Path system environment variables which the following steps need to work
     // 3. Install msys64 and add the path to the binaries (C:\msys64\usr\bin) to the Path environment variable: winget install msys2.msys2
@@ -17,6 +18,12 @@ pub fn build(b: *std.Build) void {
     //     2. build-tools and platforms contain tools to package the application into a valid APK (android has a strict system in place to make sure it's not a harmful package, which includes stuff like packages signature checks)
     //     3. ndk contains the C/C++ includes needed to actually develop your app, which you will include in your codebase
     //     4. the latest platforms' versions' android.jar (used to link evertyhing together to make an apk) is bugged, please keep android-32 - tested and working
+    // 6. Add the build-tools directory C:\Android\cmdline-tools\bin and C:\Android\cmdline-tools\bin\build-tools\<version parsed in step 5b> to the Path system environment variable
+    // 7. aapt2 compile -o compiled_res.zip --dir res
+    // 8. aapt2 link -o unsigned.apk -I C:\Android\cmdline-tools\bin\platforms\android-32\android.jar --manifest AndroidManifest.xml compiled_res.zip
+    // 9. javac classes.java
+    // 10. java -cp "C:\Android\cmdline-tools\bin\build-tools\33.0.2\lib\d8.jar" com.android.tools.r8.D8 --output .\ *.class
+    // 11. zip -X -0 unsigned.apk classes.dex
 
     // -------- CONFIG --------
     const ndk_path = "C:/Android/cmdline-tools/bin/ndk/25.2.9519653";
@@ -45,59 +52,13 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(lib);
 
     // Steps that actually worked:
-    // 1. aapt2 compile -o compiled_res.zip --dir res
-    // 2. aapt2 link -o unsigned.apk -I C:\Android\cmdline-tools\bin\platforms\android-32\android.jar --manifest AndroidManifest.xml compiled_res.zip
-    // 3. javac classes.java
-    // 7. java -cp "C:\Android\cmdline-tools\bin\build-tools\33.0.2\lib\d8.jar" com.android.tools.r8.D8 --output .\ *.class
-    // 3. ren unsigned.apk unsigned.zip
-    // 4. 7z u -tzip -mx=0 unsigned.zip "lib\arm64-v8a\libmain.so"
-    // 8. 7z u -tzip -mx=0 unsigned.zip "classes.dex"
-    // 9. ren unsigned.zip unsigned.apk
-    // 10. if you don't have a key, use this command to make one:
-    //     keytool -genkeypair -keystore my-upload-key.jks -alias my-app-key -keyalg EC -curve prime256v1 -validity 20000
-    //     Write the key down somewhere physical because you will never be able to update you app on the play store if you don't remember it
-    // 11. C:\Android\cmdline-tools\bin\build-tools\33.0.2\zipalign -f -p -v 4 unsigned.apk aligned.apk
 
-    // Steps remaining:
-    // C:\Android\ndk\25.2.9519653\toolchains\llvm\prebuilt\windows-x86_64\bin\clang \
-    // --target=aarch64-none-linux-android21 \
-    // -shared -fPIC -o ../lib/arm64-v8a/libmain.so main.c \
-    // -I C:\Android\ndk\25.2.9519653\sources\android\native_app_glue
-
-    // Creates libmain.so for arm64 devices.
-
-    // For other architectures, repeat with correct target (armeabi-v7a, etc.).
-
-    // Step 5: Compile resources
-    // cd C:\MyNativeApp
-
-    // # Compile XML into proto format
-    // aapt2 compile -o compiled/ res/values/strings.xml
-
-    // # Link resources and generate resources.arsc and minimal classes.dex
-    // aapt2 link -o resources.arsc \
-    //     --manifest AndroidManifest.xml \
-    //     -I %ANDROID_HOME%\platforms\android-33\android.jar \
-    //     compiled/
-
-    // This produces the minimal resources.arsc and classes.dex files.
-
-    // Step 6: Package APK
-    // cd C:\MyNativeApp
-
-    // zip -r MinimalNative.apk \
-    //     AndroidManifest.xml \
-    //     resources.arsc \
-    //     lib/arm64-v8a/libmain.so \
-    //     res/
-
-    // Step 7: Sign APK
-    // apksigner sign --ks my-release-key.jks MinimalNative.apk
-
-    // If you don't have a key, you can generate one with keytool (from JDK).
-
-    // Step 8: Install APK
-    // adb install -r MinimalNative.apk
-
-    // Your native activity will launch immediately.
+    // 6. mkdir lib\arm64-v8a
+    // 7. copy /Y zig-out\lib\libmain.so lib\arm64-v8a\libmain.so
+    // 4. zip -X -0 unsigned.apk lib/arm64-v8a/libmain.so
+    // 11. zipalign -f -p -v 4 unsigned.apk aligned.apk
+    // 12. if you don't have a key, use this command to make one:
+    //     keytool -genkeypair -keystore my-upload-key.jks -alias my-app-key -keyalg RSA -keysize 4096 -validity 20000 -dname "CN=Paolo Parker, O=KissMyApp, C=US"
+    //     Save the file somewhere on your servers because you will never be able to update your app on the play store if you don't have it
+    // 12. apksigner sign --ks my-upload-key.jks --ks-key-alias my-app-key --v4-signing-enabled true --out final.apk aligned.apk
 }
