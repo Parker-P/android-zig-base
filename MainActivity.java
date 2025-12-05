@@ -1,3 +1,4 @@
+package com.example.minimalnative;
 import android.app.Activity;
 import android.os.Bundle;
 

@@ -22,6 +22,7 @@ pub fn build(b: *std.Build) void {
     // 8. aapt2 compile -o compiled_res.zip --dir res
     // 9. aapt2 link -o unsigned.apk -I C:\Android\cmdline-tools\bin\platforms\android-32\android.jar --manifest AndroidManifest.xml compiled_res.zip
     // 10. javac -d . -source 8 -target 8 -bootclasspath C:\Android\cmdline-tools\bin\platforms\android-32\android.jar -classpath C:\Android\cmdline-tools\bin\platforms\android-32\android.jar -Xlint:-options .\MainActivity.java
+    // 11. xcopy /y .\com\example\minimalnative\MainActivity.class .
     // 11. java -cp "C:\Android\cmdline-tools\bin\build-tools\33.0.2\lib\d8.jar" com.android.tools.r8.D8 --min-api 24 --output . .\MainActivity.class
     // 12. zip -X -0 unsigned.apk classes.dex
 
@@ -40,21 +41,26 @@ pub fn build(b: *std.Build) void {
     // Create the shared library (NativeActivity expects libmain.so)
     const lib = b.addSharedLibrary(.{ .name = "main", .root_source_file = b.path("main.zig"), .target = target, .optimize = std.builtin.OptimizeMode.Debug });
 
-    // Include directory for headers
-    lib.addIncludePath(.{ .cwd_relative = ndk_path ++ "/sources/android/native_app_glue" });
-    lib.addIncludePath(.{ .cwd_relative = ndk_path ++ "/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include" });
-    lib.addIncludePath(.{ .cwd_relative = ndk_path ++ "/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/aarch64-linux-android" });
+    // Essential: Link libc (provides read/write/malloc)
+    lib.setLibCFile(b.path("libc.txt"));
 
-    // Add the actual C implementation of android_native_app_glue
-    lib.addCSourceFile(.{ .file = .{ .cwd_relative = ndk_path ++ "/sources/android/native_app_glue/android_native_app_glue.c" }, .flags = &.{"-fPIC"} });
+    // Essential: Link log for __android_log_print
+    lib.linkSystemLibrary("log");
 
-    // Output result
+    // FIX: Add NDK sysroot as library search path (Zig finds liblog.so here)
+    const sysroot_lib_path = ndk_path ++ "/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/24";
+    lib.addLibraryPath(.{ .cwd_relative = sysroot_lib_path });
+
+    // Include path for headers (android/log.h)
+    const sysroot_include_path = ndk_path ++ "/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/aarch64-linux-android";
+    lib.addIncludePath(.{ .cwd_relative = sysroot_include_path });
+
     b.installArtifact(lib);
 
     // Steps that actually worked:
 
     // 13. mkdir lib\arm64-v8a
-    // 14. copy /Y zig-out\lib\libmain.so lib\arm64-v8a\libmain.so
+    // 14. xcopy /Y zig-out\lib\libmain.so lib\arm64-v8a\libmain.so
     // 15. zip -X -0 unsigned.apk lib/arm64-v8a/libmain.so
     // 16. zipalign -f -p -v 4 unsigned.apk aligned.apk
     // 17. if you don't have a key, use this command to make one:
