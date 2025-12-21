@@ -73,5 +73,11 @@ RUN zip -X -0 unsigned.apk lib/arm64-v8a/libmain.so
 
 RUN ${ANDROID_SDK_ROOT}/build-tools/33.0.2/zipalign -f -p -v 4 unsigned.apk aligned.apk
 
+RUN if [ ! -e /path/to/your/file ]; then \
+    keytool -genkeypair -keystore my-upload-key.jks -alias my-app-key -keyalg RSA -keysize 4096 -validity 20000 -dname "CN=Paolo Parker, O=KissMyApp, C=US" -storepass pass123 -keypass pass123 -noprompt; \
+fi 
+
+RUN ${ANDROID_SDK_ROOT}/build-tools/33.0.2/apksigner sign --ks my-upload-key.jks --ks my-upload-key.jks --ks-key-alias my-app-key --ks-pass pass:pass123 --key-pass pass:pass123 --ks-key-alias my-app-key --v4-signing-enabled true --out final.apk aligned.apk
+
 FROM scratch AS export
-COPY --from=build /app/aligned.apk /aligned.apk
+COPY --from=build /app/final.apk /final.apk
