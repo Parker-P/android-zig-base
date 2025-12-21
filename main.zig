@@ -3,7 +3,7 @@ const android = @cImport({
     @cInclude("android/log.h");
 });
 
-export fn JNI_OnLoad(vm: *anyopaque, reserved: ?*anyopaque) callconv(.C) c_int {
+export fn JNI_OnLoad(vm: *anyopaque, reserved: ?*anyopaque) callconv(.c) c_int {
     _ = vm;
     _ = reserved;
     _ = android.__android_log_print(android.ANDROID_LOG_INFO, "ZIG", "Library loaded!", "");

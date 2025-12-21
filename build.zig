@@ -39,7 +39,7 @@ pub fn build(b: *std.Build) void {
     });
 
     // Create the shared library (NativeActivity expects libmain.so)
-    const lib = b.addSharedLibrary(.{ .name = "main", .root_source_file = b.path("main.zig"), .target = target, .optimize = std.builtin.OptimizeMode.Debug });
+    const lib = b.addLibrary(.{ .name = "main", .linkage = .dynamic, .root_module = b.createModule(.{ .root_source_file = b.path("main.zig"), .target = target, .optimize = std.builtin.OptimizeMode.Debug }) });
 
     // Links the library against Google's libc for android (BIONIC)
     lib.addObjectFile(std.Build.LazyPath{ .cwd_relative = "C:/Android/cmdline-tools/bin/ndk/25.2.9519653/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/24/libc.so" });
