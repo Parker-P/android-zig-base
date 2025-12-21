@@ -41,8 +41,8 @@ pub fn build(b: *std.Build) void {
     // Create the shared library (NativeActivity expects libmain.so)
     const lib = b.addSharedLibrary(.{ .name = "main", .root_source_file = b.path("main.zig"), .target = target, .optimize = std.builtin.OptimizeMode.Debug });
 
-    // Essential: Link libc (provides read/write/malloc)
-    lib.setLibCFile(b.path("libc.txt"));
+    // Links the library against Google's libc for android (BIONIC)
+    lib.addObjectFile(std.Build.LazyPath{ .cwd_relative = "C:/Android/cmdline-tools/bin/ndk/25.2.9519653/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/24/libc.so" });
 
     // Essential: Link log for __android_log_print
     lib.linkSystemLibrary("log");
@@ -52,7 +52,7 @@ pub fn build(b: *std.Build) void {
     lib.addLibraryPath(.{ .cwd_relative = sysroot_lib_path });
 
     // Include path for headers (android/log.h)
-    const sysroot_include_path = ndk_path ++ "/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/aarch64-linux-android";
+    const sysroot_include_path = ndk_path ++ "/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include";
     lib.addIncludePath(.{ .cwd_relative = sysroot_include_path });
 
     b.installArtifact(lib);
@@ -67,4 +67,5 @@ pub fn build(b: *std.Build) void {
     //     keytool -genkeypair -keystore my-upload-key.jks -alias my-app-key -keyalg RSA -keysize 4096 -validity 20000 -dname "CN=Paolo Parker, O=KissMyApp, C=US"
     //     Save the file somewhere on your servers because you will never be able to update your app on the play store if you don't have it
     // 18. apksigner sign --ks my-upload-key.jks --ks-key-alias my-app-key --v4-signing-enabled true --out final.apk aligned.apk
+    // 19. adb install final.apk
 }
