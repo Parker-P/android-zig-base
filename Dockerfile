@@ -1,5 +1,5 @@
 # Lightweight Linux base with OpenJDK 17 (required for recent sdkmanager)
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS build
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -73,6 +73,5 @@ RUN zip -X -0 unsigned.apk lib/arm64-v8a/libmain.so
 
 RUN ${ANDROID_SDK_ROOT}/build-tools/33.0.2/zipalign -f -p -v 4 unsigned.apk aligned.apk
 
-# Optional export stage for direct extraction with BuildKit
 FROM scratch AS export
-COPY --from=0 /app/aligned.apk /aligned.apk
+COPY --from=build /app/aligned.apk /aligned.apk
