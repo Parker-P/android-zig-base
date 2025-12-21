@@ -67,5 +67,6 @@ pub fn build(b: *std.Build) void {
     //     keytool -genkeypair -keystore my-upload-key.jks -alias my-app-key -keyalg RSA -keysize 4096 -validity 20000 -dname "CN=Paolo Parker, O=KissMyApp, C=US"
     //     Save the file somewhere on your servers because you will never be able to update your app on the play store if you don't have it
     // 18. apksigner sign --ks my-upload-key.jks --ks-key-alias my-app-key --v4-signing-enabled true --out final.apk aligned.apk
+    // 20
     // 19. adb install final.apk
 }
